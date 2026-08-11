@@ -1,0 +1,17 @@
+# Python (apps/api, workers)
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+storage/api-uploads/
+attest-dev.db
+
+# Node / Next.js
+node_modules/
+.next/
+
+# Secrets and local data (never commit)
+.env.local
+.env*.local
+apps/web/data/
+apps/web/storage/

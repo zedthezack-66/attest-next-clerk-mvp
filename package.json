@@ -1,0 +1,11 @@
+{
+  "name": "attest",
+  "private": true,
+  "workspaces": ["apps/web", "apps/portal", "apps/dashboard", "packages/shared-types", "packages/ui"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:portal": "npm run dev -w apps/portal",
+    "dev:dashboard": "npm run dev -w apps/dashboard"
+  }
+}

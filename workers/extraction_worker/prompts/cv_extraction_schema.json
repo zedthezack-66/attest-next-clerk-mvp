@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "required": ["bio", "contact", "education", "experience", "skills", "professional_bodies", "links"],
+  "properties": {
+    "bio": {"type": "object"},
+    "contact": {"type": "object"},
+    "education": {"type": "array"},
+    "experience": {"type": "array"},
+    "skills": {"type": "array"},
+    "professional_bodies": {"type": "array"},
+    "links": {"type": "array"}
+  }
+}
+

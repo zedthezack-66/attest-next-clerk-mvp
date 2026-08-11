@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { background: #f3f5f1; color: #151a17; }
+textarea, input { font: inherit; }
+
