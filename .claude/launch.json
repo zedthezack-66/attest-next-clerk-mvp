@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "attest-ats-demo",
+      "runtimeExecutable": "apps/api/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "apps.api.scripts.run_demo", "--port", "8000"],
+      "port": 8000
+    }
+  ]
+}

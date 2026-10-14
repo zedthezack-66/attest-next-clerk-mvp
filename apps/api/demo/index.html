@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attest ATS Demo</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14181f; --muted: #5b6472; --line: #e3e6eb;
+    --accent: #1f6feb; --accent-ink: #ffffff;
+    --ok: #137a3a; --ok-bg: #e5f5ea; --info: #1d5fa8; --info-bg: #e6f0fb;
+    --warn: #8a5a00; --warn-bg: #fdf3dc; --bad: #b42318; --bad-bg: #fde8e6; --neutral-bg: #eef0f3;
+    --bar1: #1f6feb; --bar2: #8250df; --bar3: #137a3a; --bar4: #bf8700;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #171b21; --ink: #e8ebef; --muted: #9aa3af; --line: #2a3038;
+      --accent: #4c8dff; --ok: #5fd08a; --ok-bg: #133222; --info: #7fb2ff; --info-bg: #142640;
+      --warn: #f0c060; --warn-bg: #3a2c0c; --bad: #ff8a80; --bad-bg: #3d1614; --neutral-bg: #232931;
+      --bar1: #4c8dff; --bar2: #a78bfa; --bar3: #5fd08a; --bar4: #f0c060;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 17px; margin: 0; }
+  header .tag { font-size: 12px; color: var(--muted); }
+  header .spacer { flex: 1; }
+  select, input, textarea, button { font: inherit; color: inherit; }
+  select, input[type=text], input[type=email], input[type=number], textarea {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  button { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:disabled { opacity: .6; cursor: default; }
+  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; padding: 16px 20px; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+  .card h2 { font-size: 15px; margin: 0 0 10px; }
+  .filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; color: var(--muted); }
+  .criteria { color: var(--muted); font-size: 13px; margin: -4px 0 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover, tbody tr.selected { background: var(--neutral-bg); }
+  tbody tr.new { animation: flash 2.5s ease-out; }
+  @keyframes flash { from { background: var(--info-bg); } to { background: transparent; } }
+  .rank { color: var(--muted); width: 28px; }
+  .name { font-weight: 600; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .score { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .stack { display: flex; height: 8px; width: 120px; border-radius: 4px; overflow: hidden; background: var(--neutral-bg); margin-top: 4px; }
+  .stack span { display: block; height: 100%; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .b-verified { color: var(--ok); background: var(--ok-bg); }
+  .b-recognised_foreign { color: var(--info); background: var(--info-bg); }
+  .b-needs_review { color: var(--warn); background: var(--warn-bg); }
+  .b-unverified { color: var(--muted); background: var(--neutral-bg); }
+  .b-unrecognised { color: var(--bad); background: var(--bad-bg); }
+  .flags { color: var(--warn); font-size: 12px; }
+  .empty { color: var(--muted); padding: 24px 4px; text-align: center; }
+  .comp { display: grid; grid-template-columns: 150px 1fr 70px; gap: 10px; align-items: center; margin: 8px 0; }
+  .comp .bar { height: 10px; background: var(--neutral-bg); border-radius: 5px; overflow: hidden; }
+  .comp .bar span { display: block; height: 100%; }
+  .comp .pts { text-align: right; font-variant-numeric: tabular-nums; }
+  .expl { color: var(--muted); font-size: 12px; grid-column: 1 / -1; margin-top: -6px; }
+  .big { font-size: 34px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .qual { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
+  .qual .row { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .checks { margin: 6px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
+  .checks li::before { content: "✓ "; color: var(--ok); }
+  .checks li.fail::before { content: "✗ "; color: var(--bad); }
+  .section { margin-top: 16px; }
+  .section h3 { font-size: 13px; margin: 0 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .chips span { display: inline-block; background: var(--neutral-bg); border-radius: 999px; padding: 2px 8px; margin: 2px 4px 2px 0; font-size: 12px; }
+  form.apply { display: grid; gap: 8px; }
+  form.apply label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 600px) { .two { grid-template-columns: 1fr; } .comp { grid-template-columns: 110px 1fr 60px; } .hide-sm { display: none; } }
+  .notice { font-size: 13px; padding: 8px 10px; border-radius: 6px; background: var(--info-bg); color: var(--info); }
+  .notice.err { background: var(--bad-bg); color: var(--bad); }
+  .disclaimer { font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tabs button.active { background: var(--neutral-bg); font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Attest</h1><span class="tag">AI-assisted hiring · ZQF-aligned credential verification</span>
+  <span class="spacer"></span>
+  <label class="sub">Job <select id="jobSelect"></select></label>
+  <span id="who" class="sub"></span>
+</header>
+
+<main>
+  <section class="card">
+    <h2 id="jobTitle">Ranked candidates</h2>
+    <div class="criteria" id="criteria"></div>
+    <div class="filters">
+      <label><input type="checkbox" id="verifiedOnly"> Verified credentials only</label>
+      <label>Min score <input type="number" id="minScore" min="0" max="100" step="5" style="width:70px"></label>
+      <button id="refresh">Refresh</button>
+      <span id="count"></span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Candidate</th><th>Fit score</th><th>Best credential</th><th class="hide-sm">Flags</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+    </table>
+    <div class="disclaimer">Registry is mock data for demonstration. "Verified" means consistent with the institution registry, not a certificate authenticity check.</div>
+  </section>
+
+  <section class="card">
+    <div class="tabs">
+      <button id="tabDetail" class="active">Candidate detail</button>
+      <button id="tabApply">Apply as a candidate</button>
+    </div>
+    <div id="detail"><div class="empty">Select a candidate to see their assessment.</div></div>
+    <div id="applyPane" hidden>
+      <form class="apply" id="applyForm">
+        <div class="two">
+          <label>Full name <input type="text" name="candidate_name" required minlength="2"></label>
+          <label>Email <input type="email" name="candidate_email" required></label>
+        </div>
+        <label>CV / resume (PDF, DOCX, TXT) <input type="file" name="cv" required accept=".pdf,.docx,.txt,.png,.jpg,.jpeg"></label>
+        <label>Cover letter (paste text) <textarea name="cover_letter_text" rows="6" placeholder="Optional"></textarea></label>
+        <label>Certificates (optional, multiple) <input type="file" name="certificates" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg"></label>
+        <div><button class="primary" type="submit" id="applyBtn">Submit application</button></div>
+        <div id="applyMsg"></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script>
+const DEMO_LOGIN = { email: "manager@attest.local", password: "password123" };
+const COMPONENTS = [
+  ["skills_experience", "Skills & experience", "var(--bar1)"],
+  ["cover_letter", "Cover letter", "var(--bar2)"],
+  ["education", "Education / ZQF", "var(--bar3)"],
+  ["certifications", "Certifications", "var(--bar4)"],
+];
+const STATUS_LABEL = {
+  verified: "Verified", recognised_foreign: "Recognised (foreign)", needs_review: "Needs review",
+  unverified: "Unverified", unrecognised: "Unrecognised",
+};
+let token = null, jobs = [], currentJob = null, selectedId = null, highlightId = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const badge = (s) => `<span class="badge b-${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>`;
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {}, token ? { Authorization: `Bearer ${token}` } : {});
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  const body = res.headers.get("content-type")?.includes("json") ? await res.json() : await res.text();
+  if (!res.ok) throw new Error(typeof body === "object" ? JSON.stringify(body.detail ?? body) : body);
+  return body;
+}
+
+async function init() {
+  const auth = await api("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(DEMO_LOGIN) });
+  token = auth.access_token;
+  $("who").textContent = `Signed in as ${DEMO_LOGIN.email} (demo recruiter)`;
+  jobs = await api("/jobs");
+  $("jobSelect").innerHTML = jobs.map((j) => `<option value="${esc(j.id)}">${esc(j.title)}</option>`).join("");
+  currentJob = jobs[0];
+  renderCriteria();
+  await loadCandidates();
+}
+
+function renderCriteria() {
+  if (!currentJob) return;
+  const j = currentJob;
+  $("jobTitle").textContent = `${j.title} — ranked candidates`;
+  const parts = [
+    j.required_skills.length && `Required: ${j.required_skills.join(", ")}`,
+    j.min_years_experience && `${j.min_years_experience}+ yrs`,
+    j.min_zqf_level && `Min ZQF level ${j.min_zqf_level}`,
+    j.preferred_certifications.length && `Preferred certs: ${j.preferred_certifications.join(", ")}`,
+  ].filter(Boolean);
+  $("criteria").textContent = parts.join(" · ");
+}
+
+async function loadCandidates() {
+  if (!currentJob) return;
+  const q = new URLSearchParams({ limit: "100" });
+  if ($("verifiedOnly").checked) q.set("verified_only", "true");
+  if ($("minScore").value) q.set("min_score", $("minScore").value);
+  const data = await api(`/jobs/${currentJob.id}/candidates?${q}`);
+  $("count").textContent = `${data.total} candidate${data.total === 1 ? "" : "s"}`;
+  if (!data.items.length) { $("rows").innerHTML = `<tr><td colspan="5" class="empty">No candidates match.</td></tr>`; return; }
+  $("rows").innerHTML = data.items.map((c) => {
+    const stack = COMPONENTS.map(([k, , color]) => `<span style="width:${(c.components[k]?.points || 0)}%;background:${color}"></span>`).join("");
+    const bq = c.best_qualification;
+    const score = c.fit_score == null ? `<span class="sub">${esc(c.status)}…</span>` : `<div class="score">${c.fit_score.toFixed(1)}</div><div class="stack">${stack}</div>`;
+    return `<tr data-id="${esc(c.application_id)}" class="${c.application_id === selectedId ? "selected" : ""} ${c.application_id === highlightId ? "new" : ""}">
+      <td class="rank">${c.rank}</td>
+      <td><div class="name">${esc(c.candidate_name)}</div><div class="sub">${esc(c.candidate_email)} · via ${esc(c.source)}</div></td>
+      <td>${score}</td>
+      <td>${bq ? `${badge(bq.verification_status)}<div class="sub">${esc(bq.title)}${bq.zqf_level ? ` · ZQF ${bq.zqf_level}` : ""}</div>` : '<span class="sub">—</span>'}</td>
+      <td class="flags hide-sm">${c.flags.length ? `${c.flags.length} flag${c.flags.length > 1 ? "s" : ""}` : ""}</td>
+    </tr>`;
+  }).join("");
+  highlightId = null;
+  document.querySelectorAll("#rows tr[data-id]").forEach((tr) => tr.addEventListener("click", () => showCandidate(tr.dataset.id)));
+}
+
+async function showCandidate(id) {
+  selectedId = id;
+  switchTab("detail");
+  document.querySelectorAll("#rows tr").forEach((tr) => tr.classList.toggle("selected", tr.dataset.id === id));
+  $("detail").innerHTML = `<div class="empty">Loading…</div>`;
+  const a = await api(`/applications/${id}/assessment`);
+  const comps = a.score_breakdown?.components || {};
+  const flags = a.score_breakdown?.flags || [];
+  const bio = a.profile?.bio || {};
+  const quals = a.qualifications.filter((q) => q.kind === "academic");
+  const certs = a.qualifications.filter((q) => q.kind === "certification");
+  $("detail").innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+      <div><h2 style="margin:0">${esc(a.candidate_name)}</h2>
+        <div class="sub">${esc(a.candidate_email)}${bio.contact?.phone ? " · " + esc(bio.contact.phone) : ""}${bio.contact?.location ? " · " + esc(bio.contact.location) : ""}</div>
+        <div class="sub">${esc(bio.total_experience_years ?? 0)} yrs experience · parsed by ${esc(bio.extraction_method || "—")}</div></div>
+      <div style="text-align:right"><div class="big">${a.fit_score == null ? "—" : a.fit_score.toFixed(1)}</div><div class="sub">Candidate Fit Score / 100</div></div>
+    </div>
+    <div class="section"><h3>Score breakdown</h3>
+      ${COMPONENTS.map(([k, label, color]) => { const c = comps[k]; if (!c) return "";
+        return `<div class="comp"><div>${label} <span class="sub">${Math.round(c.weight * 100)}%</span></div>
+          <div class="bar"><span style="width:${c.score * 100}%;background:${color}"></span></div>
+          <div class="pts">${c.points.toFixed(1)} / ${Math.round(c.weight * 100)}</div>
+          <div class="expl">${esc(c.explanation)}</div></div>`; }).join("")}
+    </div>
+    ${flags.length ? `<div class="section"><h3>Flags for reviewer</h3><ul class="flags" style="margin:0;padding-left:18px">${flags.map((f) => `<li>${esc(f)}</li>`).join("")}</ul></div>` : ""}
+    <div class="section"><h3>Academic qualifications</h3>
+      ${quals.length ? quals.map((q) => `<div class="qual"><div class="row"><div><strong>${esc(q.title)}</strong>
+          <div class="sub">${esc(q.verification_details.institution_name || q.institution_name_raw || "Institution not stated")}${q.award_year ? " · " + q.award_year : ""}${q.classification ? " · " + esc(q.classification) : ""}${q.zqf_level ? ` · ZQF ${q.zqf_level} (${esc(q.award_level_label)})` : ""}</div></div>
+          <div>${badge(q.verification_status)}</div></div>
+          <ul class="checks">${(q.verification_details.checks || []).map((c) => `<li class="${c.passed ? "" : "fail"}">${esc(c.detail)}</li>`).join("")}
+          ${q.verification_details.certificate_uploaded ? "<li>Certificate document uploaded and matched to this award.</li>" : ""}
+          ${(q.verification_details.notes || []).map((n) => `<li class="fail">${esc(n)}</li>`).join("")}</ul></div>`).join("")
+        : '<div class="sub">None found.</div>'}
+    </div>
+    ${certs.length ? `<div class="section"><h3>Certifications</h3><div class="chips">${certs.map((c) => `<span>${esc(c.title)}</span>`).join("")}</div></div>` : ""}
+    <div class="section"><h3>Cover letter summary</h3><div>${a.cover_letter_summary ? esc(a.cover_letter_summary) : '<span class="sub">No cover letter.</span>'}</div></div>
+    <div class="section"><h3>Skills</h3><div class="chips">${(a.profile?.skills || []).map((s) => `<span>${esc(s)}</span>`).join("") || '<span class="sub">—</span>'}</div></div>
+    <div class="section"><h3>Experience</h3>${(a.profile?.experience || []).map((e) => `<div>${esc(e.title || "")}${e.organisation ? " — " + esc(e.organisation) : ""} <span class="sub">${esc(e.start || "")} → ${esc(e.end || "")}</span></div>`).join("") || '<span class="sub">—</span>'}</div>
+    <div class="section"><button id="rescoreBtn">Re-score</button></div>`;
+  $("rescoreBtn").addEventListener("click", async () => {
+    $("rescoreBtn").disabled = true;
+    await api(`/applications/${id}/rescore`, { method: "POST" });
+    await loadCandidates(); await showCandidate(id);
+  });
+}
+
+function switchTab(which) {
+  $("detail").hidden = which !== "detail";
+  $("applyPane").hidden = which !== "apply";
+  $("tabDetail").classList.toggle("active", which === "detail");
+  $("tabApply").classList.toggle("active", which === "apply");
+}
+
+$("applyForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const form = new FormData(ev.target);
+  form.set("job_id", currentJob.id);
+  if (!form.get("cover_letter_text")) form.delete("cover_letter_text");
+  for (const f of form.getAll("certificates")) if (!f.name) { form.delete("certificates"); break; }
+  const msg = $("applyMsg"), btn = $("applyBtn");
+  btn.disabled = true; msg.className = "notice"; msg.textContent = "Uploading…";
+  try {
+    const res = await fetch("/applications/submit", { method: "POST", body: form });
+    const body = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(body.detail ?? body));
+    msg.textContent = "Submitted. Parsing, verifying and scoring…";
+    let status = body.status;
+    for (let i = 0; i < 30 && !["scored", "failed"].includes(status); i++) {
+      await new Promise((r) => setTimeout(r, 700));
+      status = (await api(body.status_url)).status;
+    }
+    msg.textContent = status === "scored" ? "Scored — now in the ranked list." : `Processing status: ${status}`;
+    highlightId = body.application_id;
+    ev.target.reset();
+    await loadCandidates();
+    if (status === "scored") await showCandidate(body.application_id);
+  } catch (e) {
+    msg.className = "notice err"; msg.textContent = `Error: ${e.message}`;
+  } finally { btn.disabled = false; }
+});
+
+$("tabDetail").addEventListener("click", () => switchTab("detail"));
+$("tabApply").addEventListener("click", () => switchTab("apply"));
+$("refresh").addEventListener("click", loadCandidates);
+$("verifiedOnly").addEventListener("change", loadCandidates);
+$("minScore").addEventListener("change", loadCandidates);
+$("jobSelect").addEventListener("change", (e) => { currentJob = jobs.find((j) => j.id === e.target.value); selectedId = null; renderCriteria(); loadCandidates(); });
+
+init().catch((e) => { $("rows").innerHTML = `<tr><td colspan="5" class="empty">Could not load: ${esc(e.message)}</td></tr>`; });
+</script>
+</body>
+</html>
