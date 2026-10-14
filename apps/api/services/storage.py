@@ -1,8 +1,12 @@
 import os
-from urllib.parse import urlparse
+from pathlib import Path
+
 import boto3
 
 BUCKET = os.getenv("MINIO_BUCKET", "attest-documents")
+# "local" stores files on disk (no MinIO needed for development); "s3" uses MinIO/S3.
+STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local")
+LOCAL_STORAGE_DIR = Path(os.getenv("LOCAL_STORAGE_DIR", "storage/api-uploads"))
 
 
 def client():
@@ -35,6 +39,24 @@ def presigned_put(key: str, content_type: str) -> str:
     )
 
 
-def read_object(key: str) -> bytes:
-    return client().get_object(Bucket=BUCKET, Key=key)["Body"].read()
+def _local_path(key: str) -> Path:
+    path = (LOCAL_STORAGE_DIR / key).resolve()
+    if LOCAL_STORAGE_DIR.resolve() not in path.parents:
+        raise ValueError("Invalid storage key")
+    return path
 
+
+def put_object(key: str, data: bytes, content_type: str) -> None:
+    if STORAGE_BACKEND == "local":
+        path = _local_path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return
+    ensure_bucket()
+    client().put_object(Bucket=BUCKET, Key=key, Body=data, ContentType=content_type)
+
+
+def read_object(key: str) -> bytes:
+    if STORAGE_BACKEND == "local":
+        return _local_path(key).read_bytes()
+    return client().get_object(Bucket=BUCKET, Key=key)["Body"].read()

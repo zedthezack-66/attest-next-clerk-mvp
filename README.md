@@ -42,4 +42,8 @@ npm run dev:web
 - Uploaded files are stored in `apps/web/storage/uploads`.
 - Extraction is a local preview adapter. It preserves the same raw-text -> structured-profile workflow without forcing a paid OCR/LLM provider decision yet.
 - The older Docker/FastAPI scaffold remains in the repo as a reference, but `apps/web` is the recommended MVP path.
+
+## ATS Phase 1 API
+
+`apps/api` now contains the ATS backend: CV parsing, ZAQA/ZQF-aligned qualification verification (mock registry), multi-factor candidate scoring, and ranked-candidate endpoints. See [docs/ats-phase1.md](docs/ats-phase1.md).
 # attestu-next-clerk-mvp
